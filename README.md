@@ -1,11 +1,11 @@
 # Social-Media-Sentiment-Analysis-Scraper
 
-# Project-Overview
+# Project-Overview - Topic: Games
 ---
 
 ## 1. Project Planning and Environment Setup
 
-### 1.1. Define Objectives & Scope
+### 1.1. Define Objectives & Scope - [x]
 - **Objective:** Build a robust sentiment analysis system for social media posts using Distilled BERT.
 - **Scope:** 
   - Data collection and preprocessing
@@ -13,7 +13,7 @@
   - Deployment (locally with containerization option)
   - Monitoring and continuous improvement following LLMOps best practices
 
-### 1.2. Setup Development Environment
+### 1.2. Setup Development Environment - []
 - **Programming Language:** Python
 - **Libraries/Frameworks:**
   - Hugging Face Transformers & Datasets
