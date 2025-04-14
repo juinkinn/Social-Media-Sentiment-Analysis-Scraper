@@ -4,24 +4,31 @@ on:
   push:
     branches: [ main ]
   pull_request:
-    branches: [ maain ]
+    branches: [ main ]
 
 jobs:
-  run-app:
+  test:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
 
-      - name: Setup Node.js for packageA
+      - name: Setup Node.js
         uses: actions/setup-node@v2
         with:
           node-version: '14'
 
-      - name: Install dependencies for packageA
+      # Install dependencies for the tests package
+      - name: Install test package dependencies
+        working-directory: ./testing
         run: npm install
-        working-directory: ./app
 
-      - name: Run tests for packageA
-        run: npm run dev
+      # Install dependencies for the app package
+      - name: Install app package dependencies
         working-directory: ./app
+        run: npm install
+
+      # Run the tests using the start-server-and-test script from the tests package
+      - name: Start server and run Playwright tests
+        working-directory: ./testing
+        run: npm run ci:test
