@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "playwright test",
-    "ci:test": "start-server-and-test \"npm start --prefix ../app\" http://localhost:5173 \"npm run test\""
+    "ci:test": "start-server-and-test \"npm run dev --prefix ../app\" http://localhost:5173 \"npm run test\""
   },
   "keywords": [],
   "author": "",
