@@ -23,7 +23,7 @@ jobs:
         working-directory: ./app
         run: |
           npm install
-          nohup npm dev &  #nohup ensures the process keeps running after the step finishes
+          nohup npm run dev &  #nohup ensures the process keeps running after the step finishes
           echo $! > server.pid
           sleep 10          # Wait 10 seconds to allow the app to be fully up
 
@@ -40,7 +40,7 @@ jobs:
           name: playwright-report
           path: playwright-report/
           retention-days: 30
-          
+
       - name: Stop server
         run: |
           kill $(cat server.pid)
