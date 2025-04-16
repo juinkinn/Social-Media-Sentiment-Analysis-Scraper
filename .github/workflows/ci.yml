@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [ main ]
+    branches: [ master ]
   pull_request:
-    branches: [ main ]
+    branches: [ master ]
 
 jobs:
   test:
@@ -18,17 +18,22 @@ jobs:
         with:
           node-version: '14'
 
-      # Install dependencies for the tests package
-      - name: Install test package dependencies
-        working-directory: ./testing
-        run: npm install
-
-      # Install dependencies for the app package
-      - name: Install app package dependencies
+      # Install dependencies and start the app in the background
+      - name: Install app dependencies and start app
         working-directory: ./app
-        run: npm install
+        run: |
+          npm install
+          nohup npm dev &  #nohup ensures the process keeps running after the step finishes
+          echo $! > server.pid
+          sleep 10          # Wait 10 seconds to allow the app to be fully up
 
-      # Run the tests using the start-server-and-test script from the tests package
-      - name: Start server and run Playwright tests
+      # Install dependencies and run Playwright tests
+      - name: Install test dependencies and run Playwright tests
         working-directory: ./testing
-        run: npm run ci:test
+        run: |
+          npm install
+          npm run test
+
+      - name: Stop server
+        run: |
+          kill $(cat server.pid)
