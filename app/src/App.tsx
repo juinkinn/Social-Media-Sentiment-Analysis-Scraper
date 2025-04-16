@@ -19,7 +19,7 @@ function App() {
         <Box>
           <Typography>Choose platform:</Typography>
           <MenuList sx={{backgroundColor: 'lightblue', borderRadius: '5px'}}>
-              <MenuItem onClick={() => setSocial('Twitter')}>Twitter {social === 'Twitter' ? <Check/> : null}</MenuItem>
+              <MenuItem onClick={() => setSocial('Youtube')}>Youtube {social === 'Youtube' ? <Check/> : null}</MenuItem>
               <MenuItem onClick={() => setSocial('Facebook')}>Facebook {social === 'Facebook' ? <Check/> : null}</MenuItem>
               <MenuItem onClick={() => setSocial('Reddit')}>Reddit {social === 'Reddit' ? <Check/> : null}</MenuItem>
               <MenuItem onClick={() => setSocial('Steam')}>Steam {social === 'Steam' ? <Check/> : null}</MenuItem>
