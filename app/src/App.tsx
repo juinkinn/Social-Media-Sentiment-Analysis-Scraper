@@ -4,12 +4,49 @@ import { Check } from '@mui/icons-material';
 import CardList from './components/Card/CardList';
 import Dashboard from './Dashboard';
 import './index.css';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { fetchPost } from './service/apiService';
+
 
 function App() {
   const [game, setGame] = useState<string>('');
   const [social, setSocial] = useState<string>('');
   const [crawl, setCrawl] = useState<boolean>(false);
+  const [posts, setPost] = useState<object[]>([])
+
+  useEffect(() => {
+    const getPost = async () => {
+      if (game !== '' && social !== '') {
+        console.log(`${game} from ${social}`)
+        try{
+          const Posts = await fetchPost(game, social)
+          setPost(posts.concat(Posts))
+        }
+        catch(error){
+          alert(JSON.stringify(error))
+        }
+      }
+    }
+  
+    let intervalId = null;
+
+    if (crawl) {
+      // Immediately fetch once
+      getPost();
+  
+      // Then set interval for 5-minute polling
+      intervalId = setInterval(() => {
+        getPost();
+      }, 300000); // 5 minutes
+    }
+  
+    // Cleanup on crawl change or unmount
+    return () => {
+      if (intervalId) {
+        clearInterval(intervalId);
+      }
+    };
+  }, [crawl, social])
 
   const MainContent = () => (
     <Container
@@ -34,32 +71,31 @@ function App() {
         <Typography variant="h5" sx={{ padding: '3px', border: 'solid 2px lightblue' }}>
           Realtime Web Scraping and Sentiment Analysis on Games
         </Typography>
-        <TextField label="Game name" value={game} onChange={(e) => setGame(e.target.value)} />
+        <TextField autoFocus id="game" label="Game name" value={game} onChange={(e) => setGame(e.target.value)}/>
         <Box>
           <Typography>Choose platform:</Typography>
           <MenuList sx={{ backgroundColor: 'lightblue', borderRadius: '5px' }}>
-            <MenuItem onClick={() => setSocial('Youtube')}>
-              Youtube {social === 'Youtube' ? <Check /> : null}
+            <MenuItem onClick={() => setSocial('youtube')}>
+              Youtube {social === 'youtube' ? <Check /> : null}
             </MenuItem>
-            <MenuItem onClick={() => setSocial('Facebook')}>
-              Facebook {social === 'Facebook' ? <Check /> : null}
+            <MenuItem onClick={() => setSocial('facebook')}>
+              Facebook {social === 'facebook' ? <Check /> : null}
             </MenuItem>
-            <MenuItem onClick={() => setSocial('Reddit')}>
-              Reddit {social === 'Reddit' ? <Check /> : null}
+            <MenuItem onClick={() => setSocial('reddit')}>
+              Reddit {social === 'reddit' ? <Check /> : null}
             </MenuItem>
-            <MenuItem onClick={() => setSocial('Steam')}>
-              Steam {social === 'Steam' ? <Check /> : null}
+            <MenuItem onClick={() => setSocial('steam')}>
+              Steam {social === 'steam' ? <Check /> : null}
             </MenuItem>
           </MenuList>
         </Box>
 
-        <Button
-          variant="contained"
-          sx={{ backgroundColor: crawl ? 'rgb(199, 35, 35)' : 'rgb(25, 118, 210)' }}
-          onClick={() => setCrawl(!crawl)}
-        >
-          {crawl ? 'Stop web scrape' : 'Start web scrape'}
-        </Button>
+        { 
+          social !== '' ? 
+            <Button variant='contained' sx={{ backgroundColor: crawl ? 'rgb(199, 35, 35)' : 'rgb(25, 118, 210)'}} onClick={() => setCrawl(!crawl)}>{ crawl ? 'Stop web scrape' : 'Start web scrape'}</Button>
+            : 
+            null
+        }
 
         <Link to="/dashboard">
           <Button variant="contained" sx={{ marginTop: '10px' }}>
@@ -69,7 +105,7 @@ function App() {
       </Container>
 
       <Container sx={{ height: '90vh', width: '80%', overflowY: 'scroll', backgroundColor: 'lightblue' }}>
-        <CardList />
+        <CardList posts={posts} game={game} platform={social}/>
       </Container>
     </Container>
   );
