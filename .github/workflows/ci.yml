@@ -22,7 +22,7 @@ jobs:
       - name: Install app dependencies and start app
         working-directory: ./app
         run: |
-          npm install
+          npm install --force
           nohup npm run dev &  #nohup ensures the process keeps running after the step finishes
           echo $! > server.pid
           sleep 10          # Wait 10 seconds to allow the app to be fully up
