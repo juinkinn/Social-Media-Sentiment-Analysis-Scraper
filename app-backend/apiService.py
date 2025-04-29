@@ -1,6 +1,6 @@
 import requests
 import os
-from datetime import datetime
+from datetime import datetime, timedelta, date
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -113,13 +113,124 @@ def get_youtube_comments(query):
         
         return comments[:limit]
     
-
     video = search_youtube_video(query)
 
+    comments = []
     if video:
         print(f"\nTop video for '{query}': {video['title']} by {video['author']}")
-        comments = fetch_youtube_comments(video["video_id"])
-        if comments:
+        obj = fetch_youtube_comments(video["video_id"])
+        if obj:
+            for comment in obj:
+                comments.append({
+                    'Date': comment["publishedTimeText"],
+                    'Comment': comment["content"]
+                })
             return comments
         else:
             return { 'error': 'No comments found'}
+        
+
+def get_facebook_comments(query):
+    
+    today = date.today()
+
+    # Get yesterday's date
+    yesterday = today - timedelta(days=1)
+
+    # Format as yyyy-mm-dd
+    today_str = today.strftime('%Y-%m-%d')
+    yesterday_str = yesterday.strftime('%Y-%m-%d')
+
+    headers = {
+        "X-RapidAPI-Key": API_KEY,
+        "X-RapidAPI-Host": "facebook-scraper3.p.rapidapi.com"
+    }
+    url = "https://facebook-scraper3.p.rapidapi.com/search/posts"
+    params = {"query": query,
+              "recent_posts":"true",
+              "start_date": yesterday_str,
+              "end_date": today_str
+              }
+    
+    def search_post():
+        response = requests.get(url, headers=headers, params=params)
+        if response.status_code != 200:
+            print("Error:", response.status_code)
+            return None
+        
+        posts = []
+
+        for item in response.json()['results']:
+            if item:
+                posts.append(item['post_id'])
+
+        if len(posts) != 0:
+            return posts
+
+        print("No post found.")
+        return None
+    
+    post = search_post()
+
+
+
+def steam_reviews(query):
+
+    def get_game_id():
+        url = "https://games-details.p.rapidapi.com/search"
+
+        querystring = {"sugg": query}
+
+        headers = {
+            "x-rapidapi-key": API_KEY,
+            "x-rapidapi-host": "games-details.p.rapidapi.com"
+        }
+        
+        
+        response = requests.get(url, headers=headers, params=querystring)
+        if response.status_code != 200:
+            None
+        
+        return response.json()['data']['search'][0]
+        
+
+    game = get_game_id()
+
+    if not game:
+        return {'error': 'cannot find game'}
+
+    print(game['name'], game['id'])
+
+    def get_recent_reviews():
+        url = f"https://games-details.p.rapidapi.com/reviews/mostrecent/{game['id']}"
+
+        querystring = {"limit":"30","offset":"0"}
+
+        headers = {
+            "x-rapidapi-key": API_KEY,
+            "x-rapidapi-host": "games-details.p.rapidapi.com"
+        }
+
+        response = requests.get(url, headers=headers, params=querystring)
+
+        if response.status_code != 200:
+            return None
+        
+        return response.json()['data']['reviews']
+    
+    reviews_temp = get_recent_reviews()
+    reviews = []
+    if not reviews_temp:
+        return { 'error': 'cannot fetch reviews'}
+    else:
+        print(len(reviews_temp))
+        for review in reviews_temp:
+            reviews.append(
+                {
+                    'Date': review['date'][8:],
+                    'Comment': review['content'],
+                    'type': review['title']
+                }
+            )
+    
+    return reviews
