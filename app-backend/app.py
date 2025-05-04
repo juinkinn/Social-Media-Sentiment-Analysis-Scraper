@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask, request
 import json
 import apiService
 from flask_cors import CORS, cross_origin
@@ -43,6 +43,16 @@ def getDateData(date):
     data = apiService.get_data(date)
     if not data:
         return { 'error': 'data does not exist'}
+    return data
+
+@app.route('/summarize', methods=['POST'])
+@cross_origin()
+def summarizeText():
+    req = request.get_json()
+    if request.method == 'POST':
+        text = req['text']
+    data = apiService.summarize(text)
+    
     return data
 
 

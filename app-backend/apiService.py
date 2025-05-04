@@ -5,8 +5,12 @@ from dotenv import load_dotenv
 import pandas as pd
 import csv
 from bert import getSentiment
+from google import genai
 
 load_dotenv()
+
+client = genai.Client(api_key=os.getenv("gemini"))
+
 API_KEY = os.getenv("api_key")
 
 def save_to_csv(platform: str, query: str, data : list):
@@ -345,3 +349,15 @@ def get_data(date = ''):
         })
 
     return data
+
+def summarize(text):
+
+    response = client.models.generate_content(
+        model="gemini-2.0-flash", 
+        contents="Summarize the following text into a list of important points." \
+        "Each line must not be greater than 5 words" \
+        "Return only the summarized text." \
+        "Here is the text:" \
+        f"{text}"
+    )
+    return response.text
