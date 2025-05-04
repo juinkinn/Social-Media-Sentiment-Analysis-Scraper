@@ -1,4 +1,5 @@
 from flask import Flask
+import json
 import apiService
 from flask_cors import CORS, cross_origin
 app = Flask(__name__)
@@ -25,6 +26,24 @@ def getYoutube(game):
 @cross_origin()
 def getSteam(game):
     return apiService.steam_reviews(game)
+
+@app.route('/facebook/<string:game>', methods=['GET'])
+@cross_origin()
+def getFacebook(game):
+    return apiService.get_facebook_comments(game)
+
+@app.route('/alldata', methods=['GET'])
+@cross_origin()
+def getAllData():
+    return apiService.get_data()
+
+@app.route('/data/<string:date>', methods=['GET'])
+@cross_origin()
+def getDateData(date):
+    data = apiService.get_data(date)
+    if not data:
+        return { 'error': 'data does not exist'}
+    return data
 
 
 if __name__ == '__main__':

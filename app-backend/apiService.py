@@ -2,9 +2,52 @@ import requests
 import os
 from datetime import datetime, timedelta, date
 from dotenv import load_dotenv
+import pandas as pd
+import csv
+from bert import getSentiment
 
 load_dotenv()
 API_KEY = os.getenv("api_key")
+
+def save_to_csv(platform: str, query: str, data : list):
+    if not os.path.isfile('data.csv'):
+        with open('data.csv', 'w',newline='', encoding='utf-8') as file:
+            writer = csv.writer(file)
+            writer.writerow(['id', 'gameName', 'platform', 'comment', 'sentiment', 'date' , 'userSuggestion'])
+
+    filename = 'data-' + str(date.today()) + '.csv'
+
+    if not os.path.isfile(filename):
+        with open(filename, 'w',newline='', encoding='utf-8') as file:
+            writer = csv.writer(file)
+            writer.writerow(['id', 'gameName', 'platform', 'comment', 'sentiment', 'date' , 'userSuggestion'])
+    
+    df = pd.read_csv(filename)
+    existing_ids = []
+    for _, row in df.iterrows():
+        existing_ids.append(row['id'])
+    
+    for comment in data:
+        if comment in existing_ids:
+            continue
+
+        obj = [
+            comment['id'],
+            query,
+            platform,
+            comment['Comment'],
+            comment['Sentiment'],
+            comment['Date'],
+            comment['type'] if 'type' in comment else None
+        ]
+
+        with open(filename, 'a',newline='', encoding='utf-8') as file:
+                writer = csv.writer(file)
+                writer.writerow(obj)
+        
+        with open('data.csv', 'a',newline='', encoding='utf-8') as file:
+                writer = csv.writer(file)
+                writer.writerow(obj)
 
 def search_reddit_comments(query):
     headers = {
@@ -43,6 +86,7 @@ def search_reddit_comments(query):
     print(f"Found {len(data['data'])} comments related to '{query}':\n")
     for comment in data["data"]:
         comment_text = comment.get("content", {}).get("text", "").strip()
+        comment_id = comment.get("id", "").strip()
 
         created_date = comment.get("creationDate", "No date available")
         if created_date and created_date != "No date available":
@@ -56,13 +100,16 @@ def search_reddit_comments(query):
 
         if comment_text:
             obj = {
+                'id': comment_id,
                 'Date': created_date,
-                'Comment': comment_text
+                'Comment': comment_text,
+                'Sentiment': getSentiment(comment_text)
             }
             comments.append(obj)
         else:
             print(f"Skipping comment by {author} with no valid text.")
 
+    save_to_csv('Reddit', query, comments)
     return comments
 
 
@@ -122,12 +169,16 @@ def get_youtube_comments(query):
         if obj:
             for comment in obj:
                 comments.append({
+                    'id': comment['commentId'],
                     'Date': comment["publishedTimeText"],
-                    'Comment': comment["content"]
+                    'Comment': comment["content"],
+                    'Sentiment': getSentiment(comment["content"])
                 })
-            return comments
         else:
             return { 'error': 'No comments found'}
+    
+    save_to_csv('Youtube', query, comments)
+    return comments
         
 
 def get_facebook_comments(query):
@@ -145,14 +196,16 @@ def get_facebook_comments(query):
         "X-RapidAPI-Key": API_KEY,
         "X-RapidAPI-Host": "facebook-scraper3.p.rapidapi.com"
     }
-    url = "https://facebook-scraper3.p.rapidapi.com/search/posts"
-    params = {"query": query,
-              "recent_posts":"true",
-              "start_date": yesterday_str,
-              "end_date": today_str
-              }
+    
     
     def search_post():
+        url = "https://facebook-scraper3.p.rapidapi.com/search/posts"
+        params = {"query": query,
+                "recent_posts":"true",
+                "start_date": yesterday_str,
+                "end_date": today_str
+                }
+
         response = requests.get(url, headers=headers, params=params)
         if response.status_code != 200:
             print("Error:", response.status_code)
@@ -170,8 +223,38 @@ def get_facebook_comments(query):
         print("No post found.")
         return None
     
-    post = search_post()
+    posts = search_post()
 
+    def get_comments(posts):
+        results = []
+
+        url = "https://facebook-scraper3.p.rapidapi.com/post/comments"
+
+        for id in posts:
+            querystring = {"post_id": id}
+
+            response = requests.get(url, headers=headers, params=querystring)
+            if response.status_code != 200:
+                return None
+            
+            for comment in response.json()['results']:
+                results.append(comment)
+
+        return results
+    
+    raw_comments = get_comments(posts)
+    comments = []
+
+    for comment in raw_comments:
+        comments.append({
+                    'id': comment['comment_id'],
+                    'Date': date.today(),
+                    'Comment': comment["message"],
+                    'Sentiment': getSentiment(comment["message"])
+                })
+    
+    save_to_csv('Facebook', query, comments)
+    return comments
 
 
 def steam_reviews(query):
@@ -227,10 +310,38 @@ def steam_reviews(query):
         for review in reviews_temp:
             reviews.append(
                 {
+                    'id': review['review_id'],
                     'Date': review['date'][8:],
                     'Comment': review['content'],
-                    'type': review['title']
+                    'type': review['title'],
+                    'Sentiment': getSentiment(review['content'])
                 }
             )
     
+    save_to_csv('Steam', query, reviews)
     return reviews
+
+
+def get_data(date = ''):
+    data = []
+    df = None
+
+    if date == '':
+        df = pd.read_csv('data.csv')
+    else:
+        if not os.path.isfile(f'data-{date}.csv'):
+            return None
+        df = pd.read_csv(f'data-{date}.csv')
+
+    for _,row in df.iterrows():
+        data.append({
+            'id': row['id'], 
+            'gameName': row['gameName'], 
+            'platform': row['platform'], 
+            'comment': row['comment'], 
+            'sentiment': row['sentiment'], 
+            'date': row['date'] , 
+            'userSuggestion': row['userSuggestion']
+        })
+
+    return data
