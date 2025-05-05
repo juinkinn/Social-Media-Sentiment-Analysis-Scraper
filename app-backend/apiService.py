@@ -6,7 +6,6 @@ import pandas as pd
 import csv
 from bert import getSentiment
 from google import genai
-import json
 
 load_dotenv()
 
@@ -54,7 +53,7 @@ def save_to_csv(platform: str, query: str, data : list):
                 writer = csv.writer(file)
                 writer.writerow(obj)
 
-def search_reddit_comments(query):
+def search_reddit_comments(query, test = False):
     headers = {
     "X-RapidAPI-Key": API_KEY,
     "X-RapidAPI-Host": "reddit-scraper2.p.rapidapi.com"
@@ -116,11 +115,11 @@ def search_reddit_comments(query):
         else:
             print(f"Skipping comment by {author} with no valid text.")
 
-    save_to_csv('Reddit', query, comments)
+    save_to_csv('Reddit', query, comments) if not test else None
     return comments
 
 
-def get_youtube_comments(query):
+def get_youtube_comments(query, test=False):
     YOUTUBE_API_HOST = "youtube138.p.rapidapi.com"
 
     headers = {
@@ -186,11 +185,11 @@ def get_youtube_comments(query):
         else:
             return { 'error': 'No comments found'}
     
-    save_to_csv('Youtube', query, comments)
+    save_to_csv('Youtube', query, comments) if not test else None
     return comments
         
 
-def get_facebook_comments(query):
+def get_facebook_comments(query, test=False):
     
     today = date.today()
 
@@ -262,11 +261,11 @@ def get_facebook_comments(query):
                     'Sentiment': getSentiment(comment["message"])
                 })
     
-    save_to_csv('Facebook', query, comments)
+    save_to_csv('Facebook', query, comments) if not test else None
     return comments
 
 
-def steam_reviews(query):
+def steam_reviews(query, test=False):
 
     def get_game_id():
         url = "https://games-details.p.rapidapi.com/search"
@@ -329,7 +328,7 @@ def steam_reviews(query):
                 }
             )
     
-    save_to_csv('Steam', query, reviews)
+    save_to_csv('Steam', query, reviews) if not test else None
     return reviews
 
 
