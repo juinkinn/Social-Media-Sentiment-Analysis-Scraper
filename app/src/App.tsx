@@ -13,6 +13,7 @@ function App() {
   const [social, setSocial] = useState<string>('');
   const [crawl, setCrawl] = useState<boolean>(false);
   const [posts, setPost] = useState<object[]>([])
+  const [ids, setIDs] = useState<string[]>([])
 
   useEffect(() => {
     const getPost = async () => {
@@ -20,7 +21,11 @@ function App() {
         console.log(`${game} from ${social}`)
         try{
           const Posts = await fetchPost(game, social)
-          setPost(posts.concat(Posts))
+
+          const newPosts = Posts.filter(post => !ids.includes(post['id']))
+          setIDs(newPosts.map(post => post['id']))
+
+          setPost(posts.concat(newPosts))
         }
         catch(error){
           alert(JSON.stringify(error))

@@ -6,6 +6,7 @@ import pandas as pd
 import csv
 from bert import getSentiment
 from google import genai
+import json
 
 load_dotenv()
 
@@ -104,6 +105,8 @@ def search_reddit_comments(query):
 
         if comment_text:
             obj = {
+                'Game': query,
+                'Platform': 'Reddit',
                 'id': comment_id,
                 'Date': created_date,
                 'Comment': comment_text,
@@ -173,6 +176,8 @@ def get_youtube_comments(query):
         if obj:
             for comment in obj:
                 comments.append({
+                    'Game': query,
+                    'Platform': 'Youtube',
                     'id': comment['commentId'],
                     'Date': comment["publishedTimeText"],
                     'Comment': comment["content"],
@@ -314,6 +319,8 @@ def steam_reviews(query):
         for review in reviews_temp:
             reviews.append(
                 {
+                    'Game': query,
+                    'Platform': 'Steam',
                     'id': review['review_id'],
                     'Date': review['date'][8:],
                     'Comment': review['content'],
@@ -354,10 +361,15 @@ def summarize(text):
 
     response = client.models.generate_content(
         model="gemini-2.0-flash", 
-        contents="Summarize the following text into a list of important points." \
-        "Each line must not be greater than 5 words" \
-        "Return only the summarized text." \
+        contents="Summarize the given text into a list of important points." \
+        "There can only be a maximum of 8 points and each point must not be greater than 10 words" \
+        'Return only the summarized text in the format of one long continous string with a "|" being the separator bewteen each point' \
+        'Example:  Great ost, good gameplay, high skill ceiling' \
+        
         "Here is the text:" \
         f"{text}"
     )
-    return response.text
+
+    data = response.text.split("|")
+
+    return data

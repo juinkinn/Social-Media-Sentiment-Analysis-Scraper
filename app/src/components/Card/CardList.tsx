@@ -7,14 +7,14 @@ interface Props {
     game: string;
 }
 
-const CardList = ({posts, platform, game}: Props) => {
+const CardList = ({posts}: Props) => {
 
     if (!posts || posts.length === 0) return(null)
     console.log(posts)
 
     return(
         <Box>
-            {posts.map((n, index)=> <Card key={index} game={game} comment={n.Comment} platform={platform} sentiment={0} date={n.Date}/>)}
+            {posts.map((n)=> <Card key={n.id} game={n.Game} comment={n.Comment} platform={n.Platform} sentiment={n.Sentiment} date={n.Date}/>)}
         </Box>
     );
 };
