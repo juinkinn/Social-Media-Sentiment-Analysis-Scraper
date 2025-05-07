@@ -43,6 +43,10 @@ jobs:
 
   backend-test:
     runs-on: ubuntu-latest
+    env:
+      GEMINI: ${{ secrets.GEMINI }}
+      API_KEY: ${{ secrets.API_KEY }}
+      HUGGINGFACE_TOKEN: ${{ secrets.HUGGINGFACE_TOKEN}}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
