@@ -9,9 +9,9 @@ from google import genai
 
 load_dotenv()
 
-client = genai.Client(api_key=os.getenv("gemini"))
+client = genai.Client(api_key=os.getenv("GEMINI"))
 
-API_KEY = os.getenv("api_key")
+API_KEY = os.getenv("API_KEY")
 
 def save_to_csv(platform: str, query: str, data : list):
     if not os.path.isfile('data.csv'):
