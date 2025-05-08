@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { Container, Typography, Box, Button } from '@mui/material';
 import { Bar, Pie } from 'react-chartjs-2';
 import WordCloud from 'react-d3-cloud';
@@ -12,7 +13,8 @@ import {
   ArcElement,
 } from 'chart.js';
 import { useNavigate } from 'react-router-dom';
-import './index.css'; 
+import axios from 'axios';
+import './index.css';
 
 ChartJS.register(
   CategoryScale,
@@ -24,89 +26,126 @@ ChartJS.register(
   ArcElement
 );
 
-// Sample data structure for sentiment analysis
-const sentimentData = {
-  Youtube: { positive: 60, negative: 20, neutral: 20 },
-  Facebook: { positive: 45, negative: 35, neutral: 20 },
-  Reddit: { positive: 50, negative: 30, neutral: 20 },
-  Steam: { positive: 70, negative: 15, neutral: 15 },
-};
-
-// Sample word cloud data
-const words = [
-  { text: 'gameplay', value: 100 },
-  { text: 'graphics', value: 80 },
-  { text: 'story', value: 60 },
-  { text: 'bugs', value: 40 },
-  { text: 'fun', value: 90 },
-  { text: 'lag', value: 30 },
-  { text: 'awesome', value: 70 },
-  { text: 'crash', value: 20 },
-];
-
-// Bar chart data
-const barChartData = {
-  labels: ['Youtube', 'Facebook', 'Reddit', 'Steam'],
-  datasets: [
-    {
-      label: 'Positive Sentiment (%)',
-      data: [
-        sentimentData.Youtube.positive,
-        sentimentData.Facebook.positive,
-        sentimentData.Reddit.positive,
-        sentimentData.Steam.positive,
-      ],
-      backgroundColor: 'rgba(75, 192, 192, 0.6)',
-    },
-    {
-      label: 'Negative Sentiment (%)',
-      data: [
-        sentimentData.Youtube.negative,
-        sentimentData.Facebook.negative,
-        sentimentData.Reddit.negative,
-        sentimentData.Steam.negative,
-      ],
-      backgroundColor: 'rgba(255, 99, 132, 0.6)',
-    },
-  ],
-};
-
-// Pie chart data (average sentiment across platforms)
-const pieChartData = {
-  labels: ['Positive', 'Negative', 'Neutral'],
-  datasets: [
-    {
-      data: [
-        (sentimentData.Youtube.positive +
-          sentimentData.Facebook.positive +
-          sentimentData.Reddit.positive +
-          sentimentData.Steam.positive) / 4,
-        (sentimentData.Youtube.negative +
-          sentimentData.Facebook.negative +
-          sentimentData.Reddit.negative +
-          sentimentData.Steam.negative) / 4,
-        (sentimentData.Youtube.neutral +
-          sentimentData.Facebook.neutral +
-          sentimentData.Reddit.neutral +
-          sentimentData.Steam.neutral) / 4,
-      ],
-      backgroundColor: [
-        'rgba(75, 192, 192, 0.6)',
-        'rgba(255, 99, 132, 0.6)',
-        'rgba(255, 206, 86, 0.6)',
-      ],
-    },
-  ],
-};
+// Interface for the data structure returned by get_data
+interface Comment {
+  id: string;
+  gameName: string;
+  platform: string;
+  comment: string;
+  sentiment: string;
+  date: string;
+  userSuggestion: string | null;
+}
 
 function Dashboard() {
   const navigate = useNavigate();
+  const [sentimentData, setSentimentData] = useState<{
+    [platform: string]: { positive: number; negative: number };
+  }>({});
+  const [wordCloudData, setWordCloudData] = useState<{ text: string; value: number }[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // Map words to react-d3-cloud format
-  const wordCloudData = words.map((word) => ({
-    text: word.text,
-    value: word.value,
-  }));
+  // Fetch data from the backend
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+
+        // Fetch sentiment data
+        const dataResponse = await axios.get('http://localhost:5000/alldata');
+        const data = dataResponse.data;
+        
+        // Process sentiment data
+        const sentimentCounts: {
+          [platform: string]: { positive: number; negative: number; neutral: number };
+        } = {};
+        data.forEach((item) => {
+          const platform = item.platform;
+          const sentiment = item.sentiment.toLowerCase();
+
+          if (!sentimentCounts[platform]) {
+            sentimentCounts[platform] = { positive: 0, negative: 0, neutral: 0 };
+          }
+
+          if (sentiment === 'positive') {
+            sentimentCounts[platform].positive += 1;
+          } else if (sentiment === 'negative') {
+            sentimentCounts[platform].negative += 1;
+          }
+        });
+
+        // Convert counts to percentages
+        Object.keys(sentimentCounts).forEach((platform) => {
+          const total =
+            sentimentCounts[platform].positive +
+            sentimentCounts[platform].negative
+          if (total > 0) {
+            sentimentCounts[platform].positive = (sentimentCounts[platform].positive / total) * 100;
+            sentimentCounts[platform].negative = (sentimentCounts[platform].negative / total) * 100;
+          }
+        });
+
+        setSentimentData(sentimentCounts);
+
+        // Fetch word cloud data
+        const wordCloudResponse = await axios.get('http://localhost:5000/wordcloud');
+        setWordCloudData(wordCloudResponse.data);
+
+        setLoading(false);
+      } catch (err) {
+        setError('Failed to fetch data');
+        setLoading(false);
+        console.error(err);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  // Bar chart data
+  const barChartData = {
+    labels: Object.keys(sentimentData),
+    datasets: [
+      {
+        label: 'Positive Sentiment (%)',
+        data: Object.values(sentimentData).map((data) => data.positive),
+        backgroundColor: 'rgba(75, 192, 192, 0.6)',
+      },
+      {
+        label: 'Negative Sentiment (%)',
+        data: Object.values(sentimentData).map((data) => data.negative),
+        backgroundColor: 'rgba(255, 99, 132, 0.6)',
+      },
+    ],
+  };
+
+  // Pie chart data (average sentiment across platforms)
+  const pieChartData = {
+    labels: ['Positive', 'Negative'],
+    datasets: [
+      {
+        data: [
+          Object.values(sentimentData).reduce((sum, data) => sum + data.positive, 0) /
+            Object.keys(sentimentData).length || 0,
+          Object.values(sentimentData).reduce((sum, data) => sum + data.negative, 0) /
+            Object.keys(sentimentData).length || 0,
+        ],
+        backgroundColor: [
+          'rgba(75, 192, 192, 0.6)',
+          'rgba(255, 99, 132, 0.6)',
+        ],
+      },
+    ],
+  };
+
+  if (loading) {
+    return <Typography>Loading...</Typography>;
+  }
+
+  if (error) {
+    return <Typography color="error">{error}</Typography>;
+  }
 
   return (
     <Container
