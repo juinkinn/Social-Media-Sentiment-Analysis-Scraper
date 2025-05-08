@@ -6,12 +6,43 @@ import pandas as pd
 import csv
 from bert import getSentiment
 from google import genai
+from nltk.stem import WordNetLemmatizer
+from nltk.corpus import stopwords
+from nltk.tokenize import word_tokenize
+import nltk
+
+nltk.download('wordnet')
+nltk.download('punkt_tab')
+nltk.download('stopwords')
 
 load_dotenv()
 
 client = genai.Client(api_key=os.getenv("GEMINI"))
 
 API_KEY = os.getenv("API_KEY")
+
+def get_wordcloud(date=''):
+    data = get_data(date)
+    if data is None:
+        return None
+
+    stop_words = set(stopwords.words('english'))
+    lemmatizer = WordNetLemmatizer()
+    word_counts = {}
+
+    for item in data:
+        tokens = word_tokenize(item['comment'].lower())
+        for word in tokens:
+            if word.isalnum() and word not in stop_words and len(word) > 3:
+                word = lemmatizer.lemmatize(word)
+                word_counts[word] = (word_counts.get(word, 0) + 1)
+
+    wordcloud = [
+        {'text': word, 'value': count * 10}
+        for word, count in sorted(word_counts.items(), key=lambda x: x[1], reverse=True)[:20]
+    ]
+
+    return wordcloud
 
 def save_to_csv(platform: str, query: str, data : list):
     if not os.path.isfile('data.csv'):
@@ -281,7 +312,6 @@ def steam_reviews(query, test=False):
         response = requests.get(url, headers=headers, params=querystring)
         if response.status_code != 200:
             None
-        
         return response.json()['data']['search'][0]
         
 
@@ -342,7 +372,7 @@ def get_data(date = ''):
         if not os.path.isfile(f'data-{date}.csv'):
             return None
         df = pd.read_csv(f'data-{date}.csv')
-
+        
     for _,row in df.iterrows():
         data.append({
             'id': row['id'], 
@@ -351,7 +381,6 @@ def get_data(date = ''):
             'comment': row['comment'], 
             'sentiment': row['sentiment'], 
             'date': row['date'] , 
-            'userSuggestion': row['userSuggestion']
         })
 
     return data

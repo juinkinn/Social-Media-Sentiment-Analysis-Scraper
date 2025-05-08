@@ -1,7 +1,8 @@
-from flask import Flask, request
+from flask import Flask, request, jsonify
 import json
 import apiService
 from flask_cors import CORS, cross_origin
+
 app = Flask(__name__)
 app.config['CORS_HEADERS'] = 'Content-Type'
 cors = CORS(app) # allow CORS for all domains on all routes.
@@ -35,7 +36,8 @@ def getFacebook(game):
 @app.route('/alldata', methods=['GET'])
 @cross_origin()
 def getAllData():
-    return apiService.get_data()
+    data = apiService.get_data()
+    return jsonify(data)
 
 @app.route('/data/<string:date>', methods=['GET'])
 @cross_origin()
@@ -43,7 +45,7 @@ def getDateData(date):
     data = apiService.get_data(date)
     if not data:
         return { 'error': 'data does not exist'}
-    return data
+    return jsonify(data)
 
 @app.route('/summarize', methods=['POST'])
 @cross_origin()
@@ -55,6 +57,13 @@ def summarizeText():
     
     return data
 
+@app.route('/wordcloud', methods=['GET'])
+@cross_origin()
+def fetch_wordcloud(date=''):
+    wordcloud = apiService.get_wordcloud(date)
+    if wordcloud is None:
+        return jsonify({'error': 'Data not found'}), 404
+    return jsonify(wordcloud)
 
 if __name__ == '__main__':
     app.run(debug=True)
