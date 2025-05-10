@@ -39,6 +39,13 @@ def getAllData():
     data = apiService.get_data()
     return jsonify(data)
 
+@app.route('/alldata', methods=['DELETE'])
+@cross_origin()
+def deleteAllData():
+    with open('data.csv', 'w') as f:
+        f.write('')
+    return jsonify({'message': 'Data deleted successfully'})
+
 @app.route('/data/<string:date>', methods=['GET'])
 @cross_origin()
 def getDateData(date):
@@ -46,6 +53,13 @@ def getDateData(date):
     if not data:
         return { 'error': 'data does not exist'}
     return jsonify(data)
+
+@app.route('/data/<string:date>', methods=['DELETE'])
+@cross_origin()
+def deleteDateData(date):
+    with open(f'data-{date}.csv', 'w') as f:
+        f.write('')
+    return jsonify({'message': 'Data deleted successfully'})
 
 @app.route('/summarize', methods=['POST'])
 @cross_origin()

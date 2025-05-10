@@ -340,12 +340,19 @@ def steam_reviews(query, test=False):
         return response.json()['data']['reviews']
     
     reviews_temp = get_recent_reviews()
-    reviews = []
     if not reviews_temp:
-        return { 'error': 'cannot fetch reviews'}
-    else:
-        print(len(reviews_temp))
+        return {'error': 'No reviews found'}
+    
+    
+    reviews = []
+
+    try:
+        # check for duplicate reviews
+        seen_ids = set()
         for review in reviews_temp:
+            if review['review_id'] in seen_ids:
+                continue
+            seen_ids.add(review['review_id'])
             reviews.append(
                 {
                     'Game': query,
@@ -357,6 +364,8 @@ def steam_reviews(query, test=False):
                     'Sentiment': getSentiment(review['content'])
                 }
             )
+    except:
+        return {'error': 'No reviews found'}
     
     save_to_csv('Steam', query, reviews) if not test else None
     return reviews
