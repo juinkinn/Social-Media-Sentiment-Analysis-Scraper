@@ -1,17 +1,20 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_from_directory
 import json
 import apiService
 from flask_cors import CORS, cross_origin
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder='dist')
 app.config['CORS_HEADERS'] = 'Content-Type'
 cors = CORS(app) # allow CORS for all domains on all routes.
 
 
 @app.route('/')
-@cross_origin()
 def index():
-    return  {'test': 'hi'}
+    return send_from_directory(app.static_folder, 'index.html')
+
+@app.route('/<path:path>')
+def static_files(path):
+    return send_from_directory(app.static_folder, path)
 
 @app.route('/reddit/<string:game>', methods=['GET'])
 @cross_origin()

@@ -15,6 +15,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import './index.css';
+import { Post } from './types';
 
 ChartJS.register(
   CategoryScale,
@@ -25,17 +26,6 @@ ChartJS.register(
   Legend,
   ArcElement
 );
-
-// Interface for the data structure returned by get_data
-interface Comment {
-  id: string;
-  gameName: string;
-  platform: string;
-  comment: string;
-  sentiment: string;
-  date: string;
-  userSuggestion: string | null;
-}
 
 function Dashboard() {
   const navigate = useNavigate();
@@ -54,15 +44,15 @@ function Dashboard() {
 
         // Fetch sentiment data
         const dataResponse = await axios.get('http://localhost:5000/alldata');
-        const data = dataResponse.data;
+        const data = dataResponse.data as Post[];
         
         // Process sentiment data
         const sentimentCounts: {
           [platform: string]: { positive: number; negative: number; neutral: number };
         } = {};
         data.forEach((item) => {
-          const platform = item.platform;
-          const sentiment = item.sentiment.toLowerCase();
+          const platform = item.Platform;
+          const sentiment = item.Sentiment.toLowerCase();
 
           if (!sentimentCounts[platform]) {
             sentimentCounts[platform] = { positive: 0, negative: 0, neutral: 0 };

@@ -9,6 +9,9 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    env:
+      GEMINI: ${{ secrets.GEMINI }}
+      API_KEY: ${{ secrets.API_KEY }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -18,17 +21,30 @@ jobs:
         with:
           node-version: lts/*
 
-      # Install dependencies and start the app in the background
-      - name: Install app dependencies and start app
+      # Build frontend and copy to backend
+      - name: Build frontend
         working-directory: ./app
         run: |
           npm install --force
-          nohup npm run dev &  #nohup ensures the process keeps running after the step finishes
-          echo $! > server.pid
-          sleep 10          # Wait 10 seconds to allow the app to be fully up
+          npm run build
 
-      # Install dependencies and run Playwright tests
-      - name: Install test dependencies and run Playwright tests
+      - name: Copy frontend build to backend
+        run: |
+          rm -rf ./app-backend/dist
+          cp -r ./app/dist ./app-backend/
+
+      # Install backend dependencies and start backend
+      - name: Install backend dependencies and start backend
+        working-directory: ./app-backend
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          nohup python app.py &
+          echo $! > backend.pid
+          sleep 10  # Wait for the backend to start
+
+      # Run Playwright tests
+      - name: Run Playwright tests
         working-directory: ./testing
         run: |
           npm ci

@@ -31,7 +31,7 @@ def get_wordcloud(date=''):
     word_counts = {}
 
     for item in data:
-        tokens = word_tokenize(item['comment'].lower())
+        tokens = word_tokenize(item['Comment'].lower())
         for word in tokens:
             if word.isalnum() and word not in stop_words and len(word) > 3:
                 word = lemmatizer.lemmatize(word)
@@ -385,11 +385,11 @@ def get_data(date = ''):
     for _,row in df.iterrows():
         data.append({
             'id': row['id'], 
-            'gameName': row['gameName'], 
-            'platform': row['platform'], 
-            'comment': row['comment'], 
-            'sentiment': row['sentiment'], 
-            'date': row['date'] , 
+            'Game': row['gameName'], 
+            'Platform': row['platform'], 
+            'Comment': row['comment'], 
+            'Sentiment': row['sentiment'], 
+            'Date': row['date'] , 
         })
 
     return data

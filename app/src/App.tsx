@@ -6,30 +6,36 @@ import Dashboard from './Dashboard';
 import './index.css';
 import { useState, useEffect } from 'react';
 import { fetchPost } from './service/apiService';
-
+import { Post } from './types';
 
 function App() {
   const [game, setGame] = useState<string>('');
   const [social, setSocial] = useState<string>('');
   const [crawl, setCrawl] = useState<boolean>(false);
-  const [posts, setPost] = useState<object[]>([])
+  const [posts, setPost] = useState<Post[]>([])
   const [ids, setIDs] = useState<string[]>([])
 
   useEffect(() => {
     const getPost = async () => {
       if (game !== '' && social !== '') {
         console.log(`${game} from ${social}`)
+
         try{
-          const Posts = await fetchPost(game, social)
+          const Posts = await fetchPost(game, social) as Post[]
 
           const newPosts = Posts.filter(post => !ids.includes(post['id']))
           setIDs(newPosts.map(post => post['id']))
 
           setPost(posts.concat(newPosts))
         }
-        catch(error){
-          alert(JSON.stringify(error))
+
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        catch(error: object | any) {
+          if(error){
+            alert(JSON.stringify(error.repsonse.data))
+          }
         }
+
       }
     }
   
@@ -82,9 +88,6 @@ function App() {
           <MenuList sx={{ backgroundColor: 'lightblue', borderRadius: '5px' }}>
             <MenuItem onClick={() => setSocial('youtube')}>
               Youtube {social === 'youtube' ? <Check /> : null}
-            </MenuItem>
-            <MenuItem onClick={() => setSocial('facebook')}>
-              Facebook {social === 'facebook' ? <Check /> : null}
             </MenuItem>
             <MenuItem onClick={() => setSocial('reddit')}>
               Reddit {social === 'reddit' ? <Check /> : null}
