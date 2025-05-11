@@ -72,14 +72,6 @@ def summarizeText():
     
     return data
 
-@app.route('/wordcloud', methods=['GET'])
-@cross_origin()
-def fetch_wordcloud(date=''):
-    wordcloud = apiService.get_wordcloud(date)
-    if wordcloud is None:
-        return jsonify({'error': 'Data not found'}), 404
-    return jsonify(wordcloud)
-
 @app.route('/availableData', methods=['GET'])
 @cross_origin()
 def getAvailableData():
