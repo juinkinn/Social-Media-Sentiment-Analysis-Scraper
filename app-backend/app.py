@@ -88,6 +88,32 @@ def getAvailableData():
         return { 'error': 'data does not exist'}
     return jsonify(data)
     
+# return a csv as a blob for download
+@app.route('/downloadAll', methods=['GET'])
+@cross_origin()
+def download():
+    with open('data.csv', 'r', encoding='utf-8') as f:
+        data = f.read()
+    response = app.response_class(
+        response=data,
+        status=200,
+        mimetype='text/csv'
+    )
+    response.headers['Content-Disposition'] = 'attachment; filename=data.csv'
+    return response
+
+@app.route('/download/<string:date>', methods=['GET'])
+@cross_origin()
+def downloadDate(date):
+    with open(f'data-{date}.csv', 'r', encoding='utf-8') as f:
+        data = f.read()
+    response = app.response_class(
+        response=data,
+        status=200,
+        mimetype='text/csv'
+    )
+    response.headers['Content-Disposition'] = f'attachment; filename=data-{date}.csv'
+    return response
 
 if __name__ == '__main__':
     app.run(debug=True)

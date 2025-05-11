@@ -15,7 +15,14 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import './index.css';
 import { Post } from './types';
-import { getAlldata, getAvailableData, getDataOfDate, resetData, resetDataOfDate} from './service/apiService';
+import { 
+  getAlldata, 
+  getAvailableData, 
+  getDataOfDate, 
+  resetData, 
+  resetDataOfDate,
+  downloadAllData,
+  downloadDataOfDate} from './service/apiService';
 import SentimentBarChart from './components/Charts/SentimentBarChart';
 import SentimentPieChart from './components/Charts/SentimentPieChart';
 
@@ -145,6 +152,23 @@ function Dashboard() {
     }
   }
 
+  //handle download data
+  const handleDownloadData = async () => {
+    try {
+      const response = date === '' ? await downloadAllData() : await downloadDataOfDate(date);
+      const blob = new Blob([response], { type: 'text/csv' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `data_${date}.csv`);
+      document.body.appendChild(link);
+      link.click();
+    } catch (err) {
+      alert('Failed to download data');
+      console.error(err);
+    }
+  };
+
   if (loading) {
     return <Typography>Loading...</Typography>;
   }
@@ -196,6 +220,12 @@ function Dashboard() {
 
         <Button onClick={handleResetData} variant="outlined" color="secondary" sx={{ marginLeft: '20px' }}>
           Reset Data
+        </Button>
+      </Box>
+
+      <Box sx={{ marginTop: '30px', textAlign: 'center', marginBottom: '20px' }}>
+        <Button onClick={handleDownloadData} variant="contained" color="secondary">
+          Download Data
         </Button>
       </Box>
 

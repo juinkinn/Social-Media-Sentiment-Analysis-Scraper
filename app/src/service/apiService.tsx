@@ -36,3 +36,17 @@ export const getAvailableData = async () => {
     const response = await axios.get(`${baseURL}/availableData`)
     return response.data
 }
+
+export const downloadAllData = async () => {
+    const response = await axios.get(`${baseURL}/downloadAll`, {
+        responseType: 'blob',
+    })
+    return response.data
+}
+
+export const downloadDataOfDate = async (date: string) => {
+    const response = await axios.get(`${baseURL}/download/${date}`, {
+        responseType: 'blob',
+    })
+    return response.data
+}
