@@ -2,6 +2,7 @@ from flask import Flask, request, jsonify, send_from_directory
 import json
 import apiService
 from flask_cors import CORS, cross_origin
+import csv
 
 app = Flask(__name__, static_folder='dist')
 app.config['CORS_HEADERS'] = 'Content-Type'
@@ -45,8 +46,9 @@ def getAllData():
 @app.route('/alldata', methods=['DELETE'])
 @cross_origin()
 def deleteAllData():
-    with open('data.csv', 'w') as f:
-        f.write('')
+    with open('data.csv', 'w') as file:
+        writer = csv.writer(file)
+        writer.writerow(['id', 'gameName', 'platform', 'comment', 'sentiment', 'date' , 'userSuggestion'])
     return jsonify({'message': 'Data deleted successfully'})
 
 @app.route('/data/<string:date>', methods=['GET'])
@@ -58,8 +60,9 @@ def getDateData(date):
 @app.route('/data/<string:date>', methods=['DELETE'])
 @cross_origin()
 def deleteDateData(date):
-    with open(f'data-{date}.csv', 'w') as f:
-        f.write('')
+    with open(f'data-{date}.csv', 'w') as file:
+        writer = csv.writer(file)
+        writer.writerow(['id', 'gameName', 'platform', 'comment', 'sentiment', 'date' , 'userSuggestion'])
     return jsonify({'message': 'Data deleted successfully'})
 
 @app.route('/summarize', methods=['POST'])
