@@ -43,25 +43,24 @@ def normalize_text(text):
     return text.strip()
 
 def getSentiment(raw_text: str):
-#     text = normalize_text(raw_text)
+    text = normalize_text(raw_text)
 
-#     load_dotenv()
-#     hf_token=os.getenv("HUGGINGFACE_TOKEN")
+    load_dotenv()
+    hf_token=os.getenv("HUGGINGFACE_TOKEN")
 
 
-#     checkpoint = "GaaS-Team/DistilBERT-finetuned-GaaS"  # Example checkpoint for sentiment analysis
-#     tokenizer = AutoTokenizer.from_pretrained(checkpoint)
-#     model = AutoModelForSequenceClassification.from_pretrained(checkpoint, token=hf_token)
+    checkpoint = "GaaS-Team/DistilBERT-finetuned-GaaS"  # Example checkpoint for sentiment analysis
+    tokenizer = AutoTokenizer.from_pretrained(checkpoint)
+    model = AutoModelForSequenceClassification.from_pretrained(checkpoint, token=hf_token)
 
-#     inputs = tokenizer(text, padding=True, truncation=True, return_tensors="pt")
+    inputs = tokenizer(text, padding=True, truncation=True, return_tensors="pt")
 
-#     # Run inference
-#     with torch.no_grad():
-#         logits = model(**inputs).logits
+    # Run inference
+    with torch.no_grad():
+        logits = model(**inputs).logits
 
-#     # Get predicted classes
-#     predicted_class_ids = logits.argmax(dim=-1).tolist()
-#     predicted_classes = [model.config.id2label[id] for id in predicted_class_ids]
-#     return predicted_classes[0]
-    return 'POSITIVE'
+    # Get predicted classes
+    predicted_class_ids = logits.argmax(dim=-1).tolist()
+    predicted_classes = [model.config.id2label[id] for id in predicted_class_ids]
+    return predicted_classes[0]
 
