@@ -7,6 +7,10 @@ from dotenv import load_dotenv
 import re
 import unicodedata
 import emoji
+from openai import OpenAI
+
+load_dotenv()
+
 
 def normalize_text(text):
     text = text.lower()  # lowercase
@@ -42,10 +46,8 @@ def normalize_text(text):
 
     return text.strip()
 
-def getSentiment(raw_text: str):
+def getBertSentiment(raw_text: str):
     text = normalize_text(raw_text)
-
-    load_dotenv()
     hf_token=os.getenv("HUGGINGFACE_TOKEN")
 
 
@@ -63,4 +65,46 @@ def getSentiment(raw_text: str):
     predicted_class_ids = logits.argmax(dim=-1).tolist()
     predicted_classes = [model.config.id2label[id] for id in predicted_class_ids]
     return predicted_classes[0]
+
+def getGptSentiment(raw_text: str, game: str):
+    client = OpenAI(api_key=os.getenv("GPT_KEY"))
+    
+    try:
+        client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[{"role": "user", "content": "Hello"}]
+        )
+        prompt = (
+            'Your role is do sentiment analysis on comments from social medias on topic relating to video games.\n'
+
+            'Note that the comments are in English and can sometimes be sarcastic.\n'
+
+            'If the comment is positive, return the number "POSITIVE"\n'
+
+            'If the comment is negative, return the number "NEGATIVE"\n'
+
+            'Return only the sentiment result and nothing else.\n'
+
+            'The game is: ' + game + '\n'
+
+            'Here is the comment:\n'
+
+            f'{raw_text}\n'
+        )
+
+        completion = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[{"role": "user", "content": prompt}]
+        )
+
+        return completion.choices[0].message.content
+    except:
+        print("Error: GPT-4o-mini model is not available. Please check your OpenAI API key and model availability.")
+        return None
+
+def getSentiment(game, raw_text: str, mode = "GPT"):
+    if mode == "BERT":
+        return getBertSentiment(raw_text)
+    else:
+        return getGptSentiment(raw_text, game)
 

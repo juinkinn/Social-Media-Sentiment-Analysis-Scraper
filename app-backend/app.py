@@ -53,8 +53,6 @@ def deleteAllData():
 @cross_origin()
 def getDateData(date):
     data = apiService.get_data(date)
-    if not data:
-        return { 'error': 'data does not exist'}
     return jsonify(data)
 
 @app.route('/data/<string:date>', methods=['DELETE'])
@@ -81,6 +79,15 @@ def fetch_wordcloud(date=''):
     if wordcloud is None:
         return jsonify({'error': 'Data not found'}), 404
     return jsonify(wordcloud)
+
+@app.route('/availableData', methods=['GET'])
+@cross_origin()
+def getAvailableData():
+    data = apiService.get_available_data()
+    if not data:
+        return { 'error': 'data does not exist'}
+    return jsonify(data)
+    
 
 if __name__ == '__main__':
     app.run(debug=True)

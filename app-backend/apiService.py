@@ -63,7 +63,7 @@ def save_to_csv(platform: str, query: str, data : list):
         existing_ids.append(row['id'])
     
     for comment in data:
-        if comment in existing_ids:
+        if comment['id'] in existing_ids:
             continue
 
         obj = [
@@ -140,7 +140,7 @@ def search_reddit_comments(query, test = False):
                 'id': comment_id,
                 'Date': created_date,
                 'Comment': comment_text,
-                'Sentiment': getSentiment(comment_text)
+                'Sentiment': getSentiment(query,comment_text)
             }
             comments.append(obj)
         else:
@@ -211,7 +211,7 @@ def get_youtube_comments(query, test=False):
                     'id': comment['commentId'],
                     'Date': comment["publishedTimeText"],
                     'Comment': comment["content"],
-                    'Sentiment': getSentiment(comment["content"])
+                    'Sentiment': getSentiment(query,comment["content"])
                 })
         else:
             return { 'error': 'No comments found'}
@@ -289,7 +289,7 @@ def get_facebook_comments(query, test=False):
                     'id': comment['comment_id'],
                     'Date': date.today(),
                     'Comment': comment["message"],
-                    'Sentiment': getSentiment(comment["message"])
+                    'Sentiment': getSentiment(query,comment["message"])
                 })
     
     save_to_csv('Facebook', query, comments) if not test else None
@@ -361,7 +361,7 @@ def steam_reviews(query, test=False):
                     'Date': review['date'][8:],
                     'Comment': review['content'],
                     'type': review['title'],
-                    'Sentiment': getSentiment(review['content'])
+                    'Sentiment': getSentiment(query,review['content'])
                 }
             )
     except:
@@ -410,3 +410,16 @@ def summarize(text):
     data = response.text.split("|")
 
     return data
+
+
+def get_available_data():
+    filenames = os.listdir('.')
+    data_files = [f for f in filenames if f.startswith('data-') and f.endswith('.csv')]
+    available_dates = []
+    for file in data_files:
+        try:
+            available_dates.append(file[5:-4])
+        except ValueError:
+            print(f"Skipping file with invalid date format: {file}")
+    
+    return available_dates

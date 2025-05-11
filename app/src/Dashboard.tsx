@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import { Container, Typography, Box, Button } from '@mui/material';
-import { Bar, Pie } from 'react-chartjs-2';
 import WordCloud from 'react-d3-cloud';
 import {
   Chart as ChartJS,
@@ -16,6 +15,9 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import './index.css';
 import { Post } from './types';
+import { getAlldata, getAvailableData, getDataOfDate, resetData, resetDataOfDate} from './service/apiService';
+import SentimentBarChart from './components/Charts/SentimentBarChart';
+import SentimentPieChart from './components/Charts/SentimentPieChart';
 
 ChartJS.register(
   CategoryScale,
@@ -30,11 +32,14 @@ ChartJS.register(
 function Dashboard() {
   const navigate = useNavigate();
   const [sentimentData, setSentimentData] = useState<{
-    [platform: string]: { positive: number; negative: number };
-  }>({});
+    platform: { [key: string]: { positive: number; negative: number } },
+    game: { [key: string]: { positive: number; negative: number } };
+  }>({platform: {}, game: {}});
   const [wordCloudData, setWordCloudData] = useState<{ text: string; value: number }[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [dates, setDates] = useState<string[] | null>([]);
+  const [date, setDate] = useState<string>('');
 
   // Fetch data from the backend
   useEffect(() => {
@@ -43,36 +48,56 @@ function Dashboard() {
         setLoading(true);
 
         // Fetch sentiment data
-        const dataResponse = await axios.get('/alldata');
-        const data = dataResponse.data as Post[];
+        const dataResponse = date === '' ? await getAlldata() : await getDataOfDate(date);
+        const data = dataResponse as Post[];
         
         // Process sentiment data
         const sentimentCounts: {
-          [platform: string]: { positive: number; negative: number; neutral: number };
-        } = {};
+          platform: { [key: string]: { positive: number; negative: number } },
+          game: { [key: string]: { positive: number; negative: number } };
+        } = {platform: {}, game: {}};
+
+        if(data.length === 0) {;  
+          setLoading(false);
+          setSentimentData({platform: {}, game: {}});
+          return;
+        }
+
         data.forEach((item) => {
+          const game = item.Game;
           const platform = item.Platform;
           const sentiment = item.Sentiment.toLowerCase();
 
-          if (!sentimentCounts[platform]) {
-            sentimentCounts[platform] = { positive: 0, negative: 0, neutral: 0 };
+          if (!sentimentCounts.platform[platform]) {
+            sentimentCounts.platform[platform] = { positive: 0, negative: 0 };
+          }
+          if (!sentimentCounts.game[game]) {
+            sentimentCounts.game[game] = { positive: 0, negative: 0 };
           }
 
           if (sentiment === 'positive') {
-            sentimentCounts[platform].positive += 1;
+            sentimentCounts.platform[platform].positive += 1;
+            sentimentCounts.game[game].positive += 1;
           } else if (sentiment === 'negative') {
-            sentimentCounts[platform].negative += 1;
+            sentimentCounts.platform[platform].negative += 1;
+            sentimentCounts.game[game].negative += 1;
           }
         });
 
         // Convert counts to percentages
-        Object.keys(sentimentCounts).forEach((platform) => {
-          const total =
-            sentimentCounts[platform].positive +
-            sentimentCounts[platform].negative
+        Object.keys(sentimentCounts.platform).forEach((platform) => {
+          const total = sentimentCounts.platform[platform].positive + sentimentCounts.platform[platform].negative
           if (total > 0) {
-            sentimentCounts[platform].positive = (sentimentCounts[platform].positive / total) * 100;
-            sentimentCounts[platform].negative = (sentimentCounts[platform].negative / total) * 100;
+            sentimentCounts.platform[platform].positive = (sentimentCounts.platform[platform].positive / total) * 100;
+            sentimentCounts.platform[platform].negative = (sentimentCounts.platform[platform].negative / total) * 100;
+          }
+        });
+
+        Object.keys(sentimentCounts.game).forEach((game) => {
+          const total = sentimentCounts.game[game].positive + sentimentCounts.game[game].negative
+          if (total > 0) {
+            sentimentCounts.game[game].positive = (sentimentCounts.game[game].positive / total) * 100;
+            sentimentCounts.game[game].negative = (sentimentCounts.game[game].negative / total) * 100;
           }
         });
 
@@ -90,44 +115,35 @@ function Dashboard() {
       }
     };
 
+    const fetchAvilableData = async () => {
+      try {
+        const data = await getAvailableData()
+        setDates(data)
+      } catch (err) {
+        setError('Failed to fetch available data');
+        console.error(err);
+      }
+    }
+
     fetchData();
-  }, []);
+    fetchAvilableData();
+  }, [date]);
 
-  // Bar chart data
-  const barChartData = {
-    labels: Object.keys(sentimentData),
-    datasets: [
-      {
-        label: 'Positive Sentiment (%)',
-        data: Object.values(sentimentData).map((data) => data.positive),
-        backgroundColor: 'rgba(75, 192, 192, 0.6)',
-      },
-      {
-        label: 'Negative Sentiment (%)',
-        data: Object.values(sentimentData).map((data) => data.negative),
-        backgroundColor: 'rgba(255, 99, 132, 0.6)',
-      },
-    ],
-  };
-
-  // Pie chart data (average sentiment across platforms)
-  const pieChartData = {
-    labels: ['Positive', 'Negative'],
-    datasets: [
-      {
-        data: [
-          Object.values(sentimentData).reduce((sum, data) => sum + data.positive, 0) /
-            Object.keys(sentimentData).length || 0,
-          Object.values(sentimentData).reduce((sum, data) => sum + data.negative, 0) /
-            Object.keys(sentimentData).length || 0,
-        ],
-        backgroundColor: [
-          'rgba(75, 192, 192, 0.6)',
-          'rgba(255, 99, 132, 0.6)',
-        ],
-      },
-    ],
-  };
+  // Reset data
+  const handleResetData = async () => {
+    try {
+      if (date === '') {
+        await resetData();
+      }
+      else { await resetDataOfDate(date); }
+      setSentimentData({platform: {}, game: {}});
+      setWordCloudData([]);
+      setError(null);
+    } catch (err) {
+      setError('Failed to reset data');
+      console.error(err);
+    }
+  }
 
   if (loading) {
     return <Typography>Loading...</Typography>;
@@ -146,9 +162,42 @@ function Dashboard() {
       }}
       className="dashboard-container"
     >
+      
       <Typography variant="h5" sx={{ marginBottom: '20px' }}>
         Sentiment Analysis Dashboard
       </Typography>
+
+      {/* Return to Main Page Button */}
+      <Box sx={{ marginTop: '30px', textAlign: 'center' }}>
+        <Button
+          variant="contained"
+          color="primary"
+          onClick={() => navigate('/')}
+        >
+          Return to Main Page
+        </Button>
+      </Box>
+
+      {/* Date Selection */}
+      <Box sx={{ marginTop: '30px', textAlign: 'center', marginBottom: '20px' }}>
+        <Typography variant="h6" sx={{ marginBottom: '10px' }}>
+          Select Date for Data
+        </Typography>
+        <select
+          value={date}
+          onChange={(e) => setDate(e.target.value)}
+          style={{ padding: '10px', borderRadius: '5px' }}
+        >
+          <option value=''>All Data</option>
+          {dates && dates.map((d) => (
+            <option key={d} value={d}>{d}</option>
+          ))}
+        </select>
+
+        <Button onClick={handleResetData} variant="outlined" color="secondary" sx={{ marginLeft: '20px' }}>
+          Reset Data
+        </Button>
+      </Box>
 
       {/* Grid layout for dashboard */}
       <Box
@@ -159,64 +208,31 @@ function Dashboard() {
         }}
       >
         {/* Bar Chart */}
-        <Box
-          sx={{
-            backgroundColor: 'white',
-            padding: '20px',
-            borderRadius: '8px',
-            height: '400px',
-            display: 'flex',
-            flexDirection: 'column',
-          }}
-          className="chart-container"
-        >
-          <Typography variant="h6" sx={{ marginBottom: '10px' }}>
-            Sentiment Comparison Across Platforms
-          </Typography>
-          <Bar
-            data={barChartData}
-            options={{
-              responsive: true,
-              aspectRatio: 1.5,
-              plugins: {
-                legend: { position: 'top' },
-                title: { display: true, text: 'Positive vs Negative Sentiment' },
-              },
-            }}
-          />
-        </Box>
+        <SentimentBarChart
+          sentimentData={sentimentData.platform}
+          title="Platform Sentiment Analysis"
+        />
+
+        <SentimentBarChart
+          sentimentData={sentimentData.game}
+          title="Game Sentiment Analysis"
+        />
 
         {/* Pie Chart */}
-        <Box
-          sx={{
-            backgroundColor: 'white',
-            padding: '20px',
-            borderRadius: '8px',
-            height: '400px',
-            display: 'flex',
-            flexDirection: 'column',
-          }}
-          className="chart-container"
-        >
-          <Typography variant="h6" sx={{ marginBottom: '10px' }}>
-            Overall Sentiment Distribution
-          </Typography>
-          <Box sx={{ maxWidth: '400px', margin: 'auto' }}>
-            <Pie
-              data={pieChartData}
-              options={{
-                responsive: true,
-                plugins: {
-                  legend: { position: 'top' },
-                  title: { display: true, text: 'Sentiment Breakdown' },
-                },
-              }}
-            />
-          </Box>
-        </Box>
+        <SentimentPieChart
+          sentimentData={sentimentData.platform}
+          title="Average Platform  Sentiment Breakdown"
+          sentiment="positive"
+        />
+
+        <SentimentPieChart
+          sentimentData={sentimentData.game}
+          title="Average Game Positive Sentiment Breakdown"
+          sentiment="positive"
+        />
 
         {/* Word Cloud */}
-        <Box
+        {/*<Box
           sx={{
             backgroundColor: 'white',
             padding: '20px',
@@ -239,19 +255,10 @@ function Dashboard() {
               rotate={() => (Math.random() > 0.5 ? 90 : 0)}
             />
           </Box>
-        </Box>
+        </Box>*/}
       </Box>
 
-      {/* Return to Main Page Button */}
-      <Box sx={{ marginTop: '30px', textAlign: 'center' }}>
-        <Button
-          variant="contained"
-          color="primary"
-          onClick={() => navigate('/')}
-        >
-          Return to Main Page
-        </Button>
-      </Box>
+      
     </Container>
   );
 }
