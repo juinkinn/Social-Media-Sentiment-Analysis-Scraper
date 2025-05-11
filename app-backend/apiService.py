@@ -54,20 +54,16 @@ def save_to_csv(platform: str, query: str, data : list):
                 writer.writerow(obj)
 
 def search_reddit_comments(query, test = False):
+    url = "https://reddit-com.p.rapidapi.com/search-comments"
+
+    querystring = {"query": query,"sort":"new"}
+
     headers = {
-    "X-RapidAPI-Key": API_KEY,
-    "X-RapidAPI-Host": "reddit-scraper2.p.rapidapi.com"
-    }
-    url = "https://reddit-scraper2.p.rapidapi.com/search_comments_v3"
-    
-    params = {
-        "query": query,
-        "sort": "NEW",  # Changed to NEW for real-time data
-        "nsfw": "0",
-        "time": "day"  # Restrict to last 24 hours
+        "x-rapidapi-key": API_KEY,
+        "x-rapidapi-host": "reddit-com.p.rapidapi.com"
     }
 
-    response = requests.get(url, headers=headers, params=params)
+    response = requests.get(url, headers=headers, params=querystring)
     
     if response.status_code != 200:
         print(f"Error: {response.status_code}")
@@ -89,10 +85,10 @@ def search_reddit_comments(query, test = False):
 
     print(f"Found {len(data['data'])} comments related to '{query}':\n")
     for comment in data["data"]:
-        comment_text = comment.get("content", {}).get("text", "").strip()
+        comment_text = comment.get("content", {}).get("markdown", "").strip()
         comment_id = comment.get("id", "").strip()
 
-        created_date = comment.get("creationDate", "No date available")
+        created_date = comment.get("createdAt", "No date available")
         if created_date and created_date != "No date available":
             try:
                 created_date = datetime.strptime(created_date, "%Y-%m-%dT%H:%M:%S.%f+0000")
