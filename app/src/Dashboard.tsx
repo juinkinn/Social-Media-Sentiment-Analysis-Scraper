@@ -111,8 +111,23 @@ function Dashboard() {
         setSentimentData(sentimentCounts);
 
         // Fetch word cloud data
-        const wordCloudResponse = await axios.get('/wordcloud');
-        setWordCloudData(wordCloudResponse.data);
+        const wordCounts: { [word: string]: number } = {};
+        data.forEach((item) => {
+          // Simple word splitting (improve this based on your needs)
+          const words = item.Comment.toLowerCase().split(/\s+/);
+          words.forEach((word) => {
+            if (word.length > 3) { // Ignore short words
+              wordCounts[word] = (wordCounts[word] || 0) + 1;
+            }
+          });
+        });
+
+        // Convert word counts to word cloud format
+        const wordCloud = Object.entries(wordCounts)
+          .map(([text, value]) => ({ text, value: value * 10 })) // Scale value for visibility
+          .sort((a, b) => b.value - a.value)
+          .slice(0, 20); // Limit to top 20 words
+        setWordCloudData(wordCloud);
 
         setLoading(false);
       } catch (err) {
@@ -262,7 +277,7 @@ function Dashboard() {
         />
 
         {/* Word Cloud */}
-        {/*<Box
+        <Box
           sx={{
             backgroundColor: 'white',
             padding: '20px',
@@ -285,7 +300,7 @@ function Dashboard() {
               rotate={() => (Math.random() > 0.5 ? 90 : 0)}
             />
           </Box>
-        </Box>*/}
+        </Box>
       </Box>
 
       
