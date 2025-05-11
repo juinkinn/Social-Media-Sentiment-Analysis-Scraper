@@ -43,7 +43,7 @@ function Dashboard() {
         setLoading(true);
 
         // Fetch sentiment data
-        const dataResponse = await axios.get('http://localhost:5000/alldata');
+        const dataResponse = await axios.get('/alldata');
         const data = dataResponse.data as Post[];
         
         // Process sentiment data
@@ -79,7 +79,7 @@ function Dashboard() {
         setSentimentData(sentimentCounts);
 
         // Fetch word cloud data
-        const wordCloudResponse = await axios.get('http://localhost:5000/wordcloud');
+        const wordCloudResponse = await axios.get('/wordcloud');
         setWordCloudData(wordCloudResponse.data);
 
         setLoading(false);
