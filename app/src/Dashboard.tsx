@@ -66,6 +66,7 @@ function Dashboard() {
         if(data.length === 0) {;  
           setLoading(false);
           setSentimentData({platform: {}, game: {}});
+          setWordCloudData([])
           return;
         }
 
