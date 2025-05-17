@@ -1,3 +1,0 @@
-Reddit API: https://rapidapi.com/fkal094tiokg09w3vi095i/api/reddit-scraper2
-Quora API: https://rapidapi.com/fkal094tiokg09w3vi095i/api/quora-scraper
-Youtube API: https://rapidapi.com/Glavier/api/youtube138
