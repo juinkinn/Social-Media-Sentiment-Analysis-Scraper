@@ -48,12 +48,12 @@ def normalize_text(text):
 
 def getBertSentiment(raw_text: str):
     text = normalize_text(raw_text)
-    hf_token=os.getenv("HUGGINGFACE_TOKEN")
+    #hf_token=os.getenv("HUGGINGFACE_TOKEN")
 
 
     checkpoint = "GaaS-Team/DistilBERT-finetuned-GaaS"  # Example checkpoint for sentiment analysis
     tokenizer = AutoTokenizer.from_pretrained(checkpoint)
-    model = AutoModelForSequenceClassification.from_pretrained(checkpoint, token=hf_token)
+    model = AutoModelForSequenceClassification.from_pretrained(checkpoint)
 
     inputs = tokenizer(text, padding=True, truncation=True, return_tensors="pt")
 
@@ -102,7 +102,7 @@ def getGptSentiment(raw_text: str, game: str):
         print("Error: GPT-4o-mini model is not available. Please check your OpenAI API key and model availability.")
         return None
 
-def getSentiment(game, raw_text: str, mode = "GPT"):
+def getSentiment(game, raw_text: str, mode = "BERT"):
     if mode == "BERT":
         return getBertSentiment(raw_text)
     else:

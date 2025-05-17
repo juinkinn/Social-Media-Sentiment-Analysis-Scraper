@@ -29,9 +29,32 @@ Finetune on DistilBERT base uncased finetuned SST-2. It is registered on **Huggi
 
 ![archi](img/archi.png)
 
-## 6. Usage guidelines:
+## 6. Running the application:
 
-For locally usage, navigate to ```app-backend``` folder and run ```python app.py``` in terminal. If you want to use deployed version, check [Social media sentiment analysis scraper](https://social-media-sentiment-analysis-scraper.onrender.com/).
+For locally usage, navigate to ```app-backend```.
+
+Before running the app, make sure you created an *.env* file with following keys:
+
+```
+API_KEY=''
+GEMINI=''
+GPT_KEY=''
+```
+* *GPT_KEY* is not necessary if you are only going to use BERT.
+* Default model for sentiment analysis is BERT, you can change it to GPT in the *getSentiment* params in app-backend/bert.py
+* To get a the API_KEY token for data scraping, log into RapidAPI and subscribe to the following APIs: Games Details (Steam), Reddit COM, Youtube 
+
+Next, run the following commands:
+
+```bash
+.venv/Scripts/activate
+pip install -r requirements.txt
+python app.py
+``` 
+
+If you want to use deployed version, check [Social media sentiment analysis scraper](https://social-media-sentiment-analysis-scraper.onrender.com/).
+
+## 7. Usage guidelines:
 
 Having accessed to the website, you can input the game name that you want to scrape sentiment data and choose which platform to scrape. The returning result will appear:
 

@@ -1,5 +1,5 @@
 1. run "cd app-backend"
 2. run ".venv/Scripts/activate"
-3. run "pip install -r"
+3. run "pip install -r requirements.txt"
 3. create .env file with hf token and rapid api token
 4. run "python app.py"
