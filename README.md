@@ -47,7 +47,6 @@ GPT_KEY=''
 Next, run the following commands:
 
 ```bash
-.venv/Scripts/activate
 pip install -r requirements.txt
 python app.py
 ``` 
