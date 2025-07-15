@@ -10,7 +10,10 @@ import emoji
 from openai import OpenAI
 
 load_dotenv()
-
+checkpoint = "GaaS-Team/DistilBERT-finetuned-GaaS"
+hf_token = os.getenv("HUGGINGFACE_TOKEN")
+tokenizer = AutoTokenizer.from_pretrained(checkpoint, use_auth_token=hf_token)
+model = AutoModelForSequenceClassification.from_pretrained(checkpoint, use_auth_token=hf_token)
 
 def normalize_text(text):
     text = text.lower()  # lowercase
@@ -48,23 +51,15 @@ def normalize_text(text):
 
 def getBertSentiment(raw_text: str):
     text = normalize_text(raw_text)
-    #hf_token=os.getenv("HUGGINGFACE_TOKEN")
-
-
-    checkpoint = "GaaS-Team/DistilBERT-finetuned-GaaS"  # Example checkpoint for sentiment analysis
-    tokenizer = AutoTokenizer.from_pretrained(checkpoint)
-    model = AutoModelForSequenceClassification.from_pretrained(checkpoint)
-
     inputs = tokenizer(text, padding=True, truncation=True, return_tensors="pt")
 
-    # Run inference
     with torch.no_grad():
         logits = model(**inputs).logits
 
-    # Get predicted classes
     predicted_class_ids = logits.argmax(dim=-1).tolist()
     predicted_classes = [model.config.id2label[id] for id in predicted_class_ids]
     return predicted_classes[0]
+
 
 def getGptSentiment(raw_text: str, game: str):
     client = OpenAI(api_key=os.getenv("GPT_KEY"))
