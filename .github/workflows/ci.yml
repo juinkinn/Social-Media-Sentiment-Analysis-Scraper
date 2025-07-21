@@ -45,7 +45,7 @@ jobs:
 
       # Run Playwright tests
       - name: Run Playwright tests
-        working-directory: ./testing
+        working-directory: ./integration-tests
         run: |
           npm ci
           npx playwright install --with-deps
@@ -54,7 +54,7 @@ jobs:
         if: ${{ !cancelled() }}
         with:
           name: playwright-report
-          path: ./testing/playwright-report/
+          path: ./integration-tests/playwright-report/
           retention-days: 30
 
   backend-test:
