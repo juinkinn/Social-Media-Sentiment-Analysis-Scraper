@@ -23,7 +23,7 @@ jobs:
 
       # Build frontend and copy to backend
       - name: Build frontend
-        working-directory: ./app
+        working-directory: ./app-frontend
         run: |
           npm install --force
           npm run build
@@ -31,7 +31,7 @@ jobs:
       - name: Copy frontend build to backend
         run: |
           rm -rf ./app-backend/dist
-          cp -r ./app/dist ./app-backend/
+          cp -r ./app-frontend/dist ./app-backend/
 
       # Install backend dependencies and start backend
       - name: Install backend dependencies and start backend
