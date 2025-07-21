@@ -1,5 +1,4 @@
-from transformers import AutoTokenizer, AutoModelForSequenceClassification
-import torch
+import requests
 import numpy as np
 from huggingface_hub import login
 import os
@@ -10,11 +9,6 @@ import emoji
 from openai import OpenAI
 
 load_dotenv()
-checkpoint = "GaaS-Team/DistilBERT-finetuned-GaaS"
-hf_token = os.getenv("HUGGINGFACE_TOKEN")
-tokenizer = AutoTokenizer.from_pretrained(checkpoint, use_auth_token=hf_token)
-model = AutoModelForSequenceClassification.from_pretrained(checkpoint, use_auth_token=hf_token)
-
 def normalize_text(text):
     text = text.lower()  # lowercase
 
@@ -51,14 +45,21 @@ def normalize_text(text):
 
 def getBertSentiment(raw_text: str):
     text = normalize_text(raw_text)
-    inputs = tokenizer(text, padding=True, truncation=True, return_tensors="pt")
-
-    with torch.no_grad():
-        logits = model(**inputs).logits
-
-    predicted_class_ids = logits.argmax(dim=-1).tolist()
-    predicted_classes = [model.config.id2label[id] for id in predicted_class_ids]
-    return predicted_classes[0]
+    api_url = os.getenv("HUGGINGFACE_API_URL")
+    headers = {"Authorization": f"Bearer {os.getenv('HUGGINGFACE_TOKEN')}"}
+    
+    try:
+        response = requests.post(
+            api_url,
+            headers=headers,
+            json={"text": text}
+        )
+        response.raise_for_status()
+        result = response.json()
+        return result.get("sentiment", None)
+    except Exception as e:
+        print(f"Error with Hugging Face API: {e}")
+        return None
 
 
 def getGptSentiment(raw_text: str, game: str):
